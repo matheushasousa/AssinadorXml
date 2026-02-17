@@ -1,0 +1,35 @@
+name: assinador-xml-infra
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: assinador-xml-postgres
+    environment:
+      POSTGRES_DB: assinador_xml
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: assinador-xml-rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - backend
+    restart: always
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    name: backend-network
