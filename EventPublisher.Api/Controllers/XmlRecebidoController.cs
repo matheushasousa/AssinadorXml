@@ -17,6 +17,7 @@ public class XmlRecebidoController(RabbitPublisher publisher) : ControllerBase
             eventType = "XML_RECEBIDO",
             eventDateTime = DateTime.UtcNow,
             cnpj = input.Cnpj,
+            chave = input.Chave,
             xml = input.Xml,
         });
 

@@ -16,7 +16,7 @@ public class XmlAssinadoController(RabbitPublisher publisher) : ControllerBase
             eventId = Guid.NewGuid(),
             eventType = "XML_ASSINADO",
             eventDateTime = DateTime.UtcNow,
-            parentEventId = input.ParentEventId,
+            chave = input.Chave,
             xml = input.Xml,
         });
 

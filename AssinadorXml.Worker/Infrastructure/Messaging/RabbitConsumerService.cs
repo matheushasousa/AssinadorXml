@@ -36,12 +36,13 @@ public class RabbitConsumerService(
 
             var eventId = message.GetProperty("eventId").GetString()!;
             var cnpj = message.GetProperty("cnpj").GetString()!;
+            var chave = message.GetProperty("chave").GetString()!;
             var xml = message.GetProperty("xml").GetString()!;
 
             using var scope = scopeFactory.CreateScope();
             var signer = scope.ServiceProvider.GetRequiredService<AssinadorXmlService>();
 
-            await signer.ProcessarAsync(eventId, cnpj, xml);
+            await signer.ProcessarAsync(eventId, cnpj, chave, xml);
 
             await _channel.BasicAckAsync(ea.DeliveryTag, false);
         };

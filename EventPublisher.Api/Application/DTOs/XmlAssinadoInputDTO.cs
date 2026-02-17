@@ -2,6 +2,6 @@
 
 public class XmlAssinadoInputDTO
 {
-    public required string ParentEventId { get; set; }
+    public required string Chave { get; set; }
     public required string Xml { get; set; }
 }
