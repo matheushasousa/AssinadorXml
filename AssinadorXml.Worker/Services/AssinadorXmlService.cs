@@ -17,7 +17,7 @@ public class AssinadorXmlService(
 
         var xmlAssinado = ExecuteAssinaturaXml(certificado, "NFe" + chave, xml);
 
-        await PublicarXmlAssinadoAsync(eventId, xmlAssinado);
+        //await PublicarXmlAssinadoAsync(eventId, xmlAssinado);
     }
 
     private async Task<X509Certificate2> ObterCertificadoAsync(string cnpj)
