@@ -18,6 +18,9 @@ public class RabbitConsumerService(
     private Stopwatch _stopwatch = new Stopwatch();
     private int _messagesConsumed = 0;
     private object _lock = new object();
+    private DateTime _lastMessageProcessed = DateTime.UtcNow;
+
+    private readonly TimeSpan _inactivityThreshold = TimeSpan.FromMinutes(1);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -37,8 +40,6 @@ public class RabbitConsumerService(
 
         consumer.ReceivedAsync += async (model, ea) =>
         {
-            var startProcessing = DateTime.UtcNow;
-
             lock (_lock)
             {
                 if (!_stopwatch.IsRunning)
@@ -47,6 +48,8 @@ public class RabbitConsumerService(
                     logger.LogInformation("Iniciando contagem de tempo para o lote de mensagens.");
                 }
             }
+
+            CheckInactivity();
 
             var json = Encoding.UTF8.GetString(ea.Body.ToArray());
             var message = JsonSerializer.Deserialize<JsonElement>(json);
@@ -63,21 +66,15 @@ public class RabbitConsumerService(
 
             await _channel.BasicAckAsync(ea.DeliveryTag, false);
 
-            var duration = DateTime.UtcNow - startProcessing;
             lock (_lock)
             {
                 _messagesConsumed++;
+                _lastMessageProcessed = DateTime.UtcNow;
             }
 
             logger.LogInformation(
-                    "Mensagem consumida com sucesso! EventId={EventId}, TempoProcessamento={Duration}ms, TotalMensagens={Total}",
-                    eventId,
-                    duration.TotalMilliseconds,
-                    _messagesConsumed
-                );
-
-            logger.LogInformation(
-                "Tempo total acumulado até agora: {ElapsedMilliseconds} ms",
+                "Total mensagens consumidas={MessagesConsumed}, Tempo total acumulado: {ElapsedMilliseconds} ms",
+                _messagesConsumed,
                 _stopwatch.ElapsedMilliseconds
             );
         };
@@ -101,11 +98,29 @@ public class RabbitConsumerService(
         {
             _stopwatch.Stop();
             logger.LogInformation(
-                "Tempo total para processamento do lote de mensagens: {TotalSeconds} segundos",
-                _stopwatch.Elapsed.TotalSeconds
+                "Tempo total para processamento de {TotalMensagens} mensagens: {TotalSeconds} ms",
+                _messagesConsumed,
+                _stopwatch.ElapsedMilliseconds
             );
         }
 
         await base.StopAsync(cancellationToken);
+    }
+
+    private void CheckInactivity()
+    {
+        lock (_lock)
+        {
+            if (_stopwatch.IsRunning && DateTime.UtcNow - _lastMessageProcessed > _inactivityThreshold)
+            {
+                logger.LogInformation(
+                    "Nenhuma mensagem recebida nos últimos {Minutes} minutos. Resetando métricas.",
+                    _inactivityThreshold.TotalMinutes
+                );
+
+                _stopwatch.Reset();
+                _messagesConsumed = 0;
+            }
+        }
     }
 }
