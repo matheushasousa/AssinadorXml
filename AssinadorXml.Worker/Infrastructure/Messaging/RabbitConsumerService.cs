@@ -20,7 +20,7 @@ public class RabbitConsumerService(
     private object _lock = new object();
     private DateTime _lastMessageProcessed = DateTime.UtcNow;
 
-    private readonly TimeSpan _inactivityThreshold = TimeSpan.FromMinutes(1);
+    private readonly TimeSpan _inactivityThreshold = TimeSpan.FromSeconds(15);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
